@@ -323,6 +323,19 @@ class GiftTelegramApi:
         )
 
         gift = result.gift
+        
+        LOGGER.warning(
+            "NFT OWNER FIELDS | slug=%s | fields=%s",
+            slug,
+            {
+                key: str(value)[:150]
+                for key, value in gift.to_dict().items()
+                if "owner" in key.lower()
+                or "address" in key.lower()
+                or "peer" in key.lower()
+            },
+        )
+
 
         if not isinstance(gift, types.StarGiftUnique):
             raise TypeError(

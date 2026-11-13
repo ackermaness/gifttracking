@@ -52,6 +52,27 @@ jobs:
           TIMEZONE: Europe/Kyiv
         run: python -m gift_tracking.actions_monitor
 
+      - name: Checkpoint SQLite before caching
+        if: always()
+        run: |
+          python - <<'PY'
+          import sqlite3
+          from pathlib import Path
+
+          path = Path('.state/gift_tracking.sqlite3')
+          if path.exists():
+              with sqlite3.connect(path, timeout=30) as db:
+                  result = db.execute('PRAGMA wal_checkpoint(TRUNCATE)').fetchone()
+                  if result and result[0]:
+                      raise RuntimeError('SQLite checkpoint busy; refusing to cache incomplete state')
+                  mode = db.execute('PRAGMA journal_mode=DELETE').fetchone()[0]
+                  if mode.lower() != 'delete':
+                      raise RuntimeError(f'Could not switch SQLite journal mode: {mode}')
+              print('SQLite state checkpointed.')
+          else:
+              print('No state database to checkpoint.')
+          PY
+
       - name: Persist counters for the next run
         if: always()
         uses: actions/cache/save@v4

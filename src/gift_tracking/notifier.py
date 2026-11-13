@@ -145,20 +145,40 @@ class BotNotifier:
             return ssl.create_default_context(cafile=str(ca_file))
         return ssl.create_default_context()
 
+    
     async def send_event(self, event: GiftEvent) -> None:
-        keyboard = None
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {
+                        "text": "🔎 Знайти власника на see.tg",
+                        "url": "https://see.tg/",
+                    }
+                ],
+                [
+                    {
+                        "text": "🎁 Відкрити NFT",
+                        "url": event.link,
+                    }
+                ],
+            ]
+        }
+
         if event.owner_username:
-            keyboard = {
-                "inline_keyboard": [
-                    [
-                        {
-                            "text": "Написать владельцу",
-                            "url": f"https://t.me/{event.owner_username}",
-                        }
-                    ]
-                ]
-            }
-        await self.send_text(format_notification(event, self.timezone), keyboard=keyboard)
+            keyboard["inline_keyboard"].insert(
+                0,
+                [
+                    {
+                        "text": "👤 Написати власнику",
+                        "url": f"https://t.me/{event.owner_username}",
+                    }
+                ],
+            )
+
+        await self.send_text(
+            format_notification(event, self.timezone),
+            keyboard=keyboard,
+        )
 
     async def send_text(
         self,

@@ -331,6 +331,18 @@ class GiftTelegramApi:
 
         owner_name, owner_username = _owner(result, gift)
         peer = gift.owner_id
+        
+        LOGGER.warning(
+            "NFT OWNER DEBUG | slug=%s | peer_type=%s | "
+            "has_owner_id=%s | users_count=%s | chats_count=%s | "
+            "username_found=%s",
+            slug,
+            type(peer).__name__ if peer else "None",
+            peer is not None,
+            len(result.users),
+            len(result.chats),
+            bool(owner_username),
+        )
 
         # ВАЖЛИВО: змінна завжди ініціалізована.
         owner_user_id = None

@@ -199,9 +199,33 @@ class GiftTelegramApi:
         gift = result.gift
         if not isinstance(gift, types.StarGiftUnique):
             raise TypeError(f"{slug} не является уникальным подарком")
+        
         owner_name, owner_username = _owner(result, gift)
         peer = gift.owner_id
-        owner_user_id = None
+
+        if not owner_username and isinstance(
+            peer, (types.PeerUser, types.PeerChannel)
+        ):
+            try:
+                entity = await self.client.get_entity(peer)
+                owner_username = getattr(entity, "username", None)
+
+                if isinstance(peer, types.PeerUser):
+                    self.remember_owner(entity)
+
+            except (ValueError, TypeError, errors.RPCError) as exc:
+                LOGGER.debug(
+                    "Owner profile unavailable for %s: %s",
+                    gift.slug,
+                    exc,
+                )
+
+        if not owner_username:
+            LOGGER.info(
+                "Public owner username unavailable for %s",
+                gift.slug,
+            )
+
         if isinstance(peer, types.PeerUser):
             owner_user_id = peer.user_id
             entity = next((user for user in result.users if user.id == peer.user_id), None)
